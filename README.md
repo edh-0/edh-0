@@ -1,2 +1,2 @@
 [![Codewars](https://raw.githubusercontent.com/edh-0/edh-0/main/codewars-card.svg)](https://www.codewars.com/users/edh-0)
-![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=edh-0&layout=compact&theme=dark&hide_border=true)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
