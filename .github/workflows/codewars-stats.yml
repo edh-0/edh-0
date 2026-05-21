@@ -1,0 +1,68 @@
+name: Generate Codewars Card
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  generate-card:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Pull latest changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin main
+      
+      - name: Delete old codewars.svg if exists
+        run: |
+          if [ -f codewars.svg ]; then
+            git rm codewars.svg
+            git commit -m "Remove old codewars.svg" || echo "No changes to commit"
+          fi
+      
+      - name: Fetch Codewars data
+        run: |
+          curl -s "https://www.codewars.com/api/v1/users/edh-0" -o codewars.json
+      
+      - name: Generate SVG card
+        run: |
+          python3 - << 'EOF'
+          import json
+
+          with open('codewars.json') as f:
+              data = json.load(f)
+
+          username = data['username']
+          honor = data['honor']
+          rank = data['ranks']['overall']['name']
+          score = data['ranks']['overall']['score']
+          completed = data['codeChallenges']['totalCompleted']
+
+          svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200">
+            <rect width="400" height="200" fill="#1a1a1a" rx="10"/>
+            <text x="20" y="40" fill="white" font-size="20" font-weight="bold">Codewars: {username}</text>
+            <text x="20" y="80" fill="#BB432C" font-size="16">Rank: {rank}</text>
+            <text x="20" y="110" fill="white" font-size="16">Honor: {honor}</text>
+            <text x="20" y="140" fill="white" font-size="16">Score: {score}</text>
+            <text x="20" y="170" fill="white" font-size="16">Completed: {completed} kata</text>
+          </svg>'''
+
+          with open('codewars-card.svg', 'w') as f:
+              f.write(svg)
+          EOF
+      
+      - name: Commit and push
+        run: |
+          git add codewars-card.svg
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update Codewars card" && git push origin main)
